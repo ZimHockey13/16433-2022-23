@@ -1,0 +1,276 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Blinker;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.Gyroscope;
+
+@TeleOp(name = "Drive2023", group = "1")
+
+public class Drive2023 extends LinearOpMode {
+    private Blinker control_Hub;
+    private Blinker expansion_Hub_2;
+    private DcMotor bl;
+    private DcMotor br;
+    private DcMotor fl;
+    private DcMotor fr;
+    private Gyroscope imu;
+    private DcMotor lift;
+    private Servo plug;
+    private Servo flipl;
+    private Servo flipr;
+    private CRServo twoin;
+    private ElapsedTime runtime = new ElapsedTime();
+
+    @Override
+    public void runOpMode() {
+
+        fl = hardwareMap.get(DcMotor.class, "fl");
+        fr = hardwareMap.get(DcMotor.class, "fr");
+        br = hardwareMap.get(DcMotor.class, "br");
+        bl = hardwareMap.get(DcMotor.class, "bl");
+        lift = hardwareMap.get(DcMotor.class, "lift");
+
+        flipl = hardwareMap.get(Servo.class, "flipl");
+        flipr = hardwareMap.get(Servo.class, "flipr");
+        plug = hardwareMap.get(Servo.class, "plug");
+        twoin = hardwareMap.get(CRServo.class, "twoin");
+
+        fr.setDirection(DcMotorSimple.Direction.REVERSE);
+        br.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        //lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        //drive variables
+        double straight;
+        double straphe;
+        double turn;
+        int dtoggle = 1;
+        double pmod = 1;
+
+        int htoggle = 4;
+        double lpow = 1;
+
+        boolean butplug;
+        butplug = true;
+        boolean cracked;
+        cracked = true;
+        boolean flippa;
+        flippa = true;
+
+        //int direc = 1;
+
+        waitForStart();
+        while (opModeIsActive()) {
+
+            //driving
+            straight = gamepad1.left_stick_y;
+            straphe = gamepad1.left_stick_x;
+            turn = gamepad1.right_stick_x;
+
+            if (gamepad1.a && cracked) {
+                cracked = false;
+                pmod = 2;
+                sleep(150);
+
+            } else if (gamepad1.a && !cracked) {
+                cracked = true;
+                pmod = 1;
+                sleep(150);
+            }
+
+            if (gamepad1.dpad_up) {
+                dtoggle = 1;
+            }
+
+            if (gamepad1.dpad_down) {
+                dtoggle = 2;
+            }
+
+            if (gamepad1.dpad_right) {
+                dtoggle = 3;
+            }
+            if (gamepad1.dpad_left) {
+                dtoggle = 4;
+            }
+
+            if (dtoggle == 1) {
+                fr.setPower((turn + (straight + straphe)) / pmod);
+                br.setPower((turn + (straight - straphe)) / pmod);
+                fl.setPower((-turn + (straight - straphe)) / pmod);
+                bl.setPower((-turn + (straight + straphe)) / pmod);
+            }
+            if (dtoggle == 2) {
+                fr.setPower(-(-turn + (straight + straphe)) / pmod);
+                br.setPower(-(-turn + (straight - straphe)) / pmod);
+                fl.setPower(-(turn + (straight - straphe)) / pmod);
+                bl.setPower(-(turn + (straight + straphe)) / pmod);
+            }
+            if (dtoggle == 3) {
+                fr.setPower((turn + (straphe - straight)) / pmod);
+                br.setPower((turn + (straphe + straight)) / pmod);
+                fl.setPower((-turn + (straphe + straight)) / pmod);
+                bl.setPower((-turn + (straphe - straight)) / pmod);
+            }
+            if (dtoggle == 4) {
+                fr.setPower(-(-turn + (straphe - straight)) / pmod);
+                br.setPower(-(-turn + (straphe + straight)) / pmod);
+                fl.setPower(-(turn + (straphe + straight)) / pmod);
+                bl.setPower(-(turn + (straphe - straight)) / pmod);
+            }
+
+            /*
+            //setting hight of lift
+            if (gamepad2.left_stick_y < 0){
+                //-2600 for 435 motor
+                //-3580 for 312 motor
+                lift.setTargetPosition(-3580);
+                lift.setPower(gamepad2.left_stick_y);
+                lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            }else if (gamepad2.left_stick_y > 0){
+                lift.setTargetPosition(-20);
+                lift.setPower(gamepad2.left_stick_y/1.5);
+                lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            }else{
+                lift.setPower(-0.0008);
+            }
+*/
+            //two extra inches
+            twoin.setPower(gamepad2.right_stick_y);
+
+
+            // preset heights for the lift
+            if (gamepad2.dpad_up) {
+                htoggle = 1;
+            } else if (gamepad2.dpad_left) {
+                htoggle = 2;
+            } else if (gamepad2.dpad_right) {
+                htoggle = 3;
+            } else if (gamepad2.dpad_down) {
+                htoggle = 4;
+            }
+
+            if (htoggle == 1) {
+                lift.setTargetPosition(-3580);
+                if (lift.getCurrentPosition() < lift.getTargetPosition()) {
+                    lpow = 0.85;
+                } else {
+                    lpow = 1;
+                }
+                lift.setPower(lpow);
+                lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            } else if (htoggle == 2) {
+                lift.setTargetPosition(-2820);
+                if (lift.getCurrentPosition() < lift.getTargetPosition()) {
+                    lpow = 0.85;
+                } else {
+                    lpow = 1;
+                }
+                lift.setPower(lpow);
+                lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            } else if (htoggle == 3) {
+                lift.setTargetPosition(-1790);
+                if (lift.getCurrentPosition() < lift.getTargetPosition()) {
+                    lpow = 0.85;
+                } else {
+                    lpow = 1;
+                }
+                lift.setPower(lpow);
+                lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            } else if (htoggle == 4) {
+                lift.setTargetPosition(-20);
+                if (lift.getCurrentPosition() < lift.getTargetPosition()) {
+                    lpow = 0.85;
+                } else {
+                    lpow = 1;
+                }
+                lift.setPower(lpow);
+                lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            }
+
+
+            //plug
+            if (gamepad2.back) {
+                lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            }
+            if (gamepad2.a && butplug) {
+                butplug = false;
+                sleep(250);
+
+            } else if (gamepad2.a && !butplug) {
+                butplug = true;
+                sleep(250);
+
+            }
+
+            if (butplug) {
+                plug.setPosition(0.65);
+            } else if (!butplug) {
+                plug.setPosition(0.71);
+            }
+
+
+            if (gamepad2.b) {
+                flipr.setPosition(-1);
+                flipl.setPosition(0.93);
+            } else {
+                flipr.setPosition(0.5);
+                flipl.setPosition(0.4);
+            }
+            
+            /*if (gamepad2.b && flippa){
+                flippa = false;
+                sleep(250);
+                
+            }else if (gamepad2.b && !flippa){
+                flippa = true;
+                sleep(250);
+                
+            }
+            
+            if (flippa) {
+                //Cone flippers are up
+                flipr.setPosition(0.5);
+                flipl.setPosition(0.4);
+            }else if (!flippa){
+                //Cone flippers are down
+                flipr.setPosition(-1);
+                flipl.setPosition(0.93);
+                if (runtime.seconds()>7){
+                    runtime.reset();
+                }
+            }
+            
+            if (runtime.seconds() > 6){
+                flippa = true;
+            }*/
+
+
+            telemetry.addData("fl", fl.getPower());
+            telemetry.addData("fr", fr.getPower());
+            telemetry.addData("br", br.getPower());
+            telemetry.addData("bl", bl.getPower());
+            telemetry.addData("lift", lift.getPower());
+            telemetry.addData("fl P", fl.getCurrentPosition());
+            telemetry.addData("fr P", fr.getCurrentPosition());
+            telemetry.addData("br P", br.getCurrentPosition());
+            telemetry.addData("bl P", bl.getCurrentPosition());
+            telemetry.addData("lift p", lift.getCurrentPosition());
+            telemetry.addData("plug", plug.getPosition());
+            telemetry.addData("plugToggle", butplug);
+            telemetry.addData("flipperToggle", flippa);
+            telemetry.addData("speedToggle", cracked);
+            telemetry.addData("directionToggle", dtoggle);
+            telemetry.addData("runTime", runtime.seconds());
+            //command d coppies the line
+            telemetry.update();
+        }
+    }
+}
